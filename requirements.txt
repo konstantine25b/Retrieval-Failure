@@ -9,3 +9,5 @@ PyYAML==6.0.3
 jupyter==1.1.1
 matplotlib==3.10.8
 seaborn==0.13.2
+textstat==0.7.12
+tiktoken==0.12.0
