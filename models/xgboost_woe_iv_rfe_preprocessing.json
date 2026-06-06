@@ -1,0 +1,131 @@
+{
+  "feature_names": [
+    "question_length_words",
+    "question_length_chars",
+    "question_complexity_score",
+    "context_token_count",
+    "is_open_source",
+    "multilingual_support",
+    "model_name_woe",
+    "positional_encoding_type_woe",
+    "attention_type_woe",
+    "tokenizer_type_woe"
+  ],
+  "iv_threshold": 0.02,
+  "iv_scores": {
+    "context_window_tokens": 0.0,
+    "max_output_tokens": 0.0,
+    "vocab_size": 0.0,
+    "knowledge_cutoff_year": 0.0,
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "top_k": 0.0,
+    "repetition_penalty": 0.0,
+    "frequency_penalty": 0.0,
+    "presence_penalty": 0.0,
+    "max_tokens_requested": 0.0,
+    "stop_sequences_count": 0.0,
+    "galileo_qa_no_rag": 0.0,
+    "galileo_qa_with_rag": 0.0,
+    "galileo_longform": 0.0,
+    "crag_hallucination_rate": 0.0,
+    "crag_accuracy": 0.0,
+    "question_length_words": 0.34419664764388136,
+    "question_length_chars": 0.45268501222737784,
+    "question_complexity_score": 0.06370284275852857,
+    "context_token_count": 0.3715707012514435,
+    "is_open_source": 0.2516021375636371,
+    "multilingual_support": 0.2516021375636371,
+    "has_few_shot_examples": 0.0,
+    "prompt_contains_system_instructions": 0.0,
+    "is_ambiguous": 0.0,
+    "contains_negation": 0.0,
+    "model_name_woe": 0.2516021375636371,
+    "positional_encoding_type_woe": 0.2516021375636371,
+    "attention_type_woe": 0.2516021375636371,
+    "tokenizer_type_woe": 0.2516021375636371,
+    "question_category_woe": 0.0036410800227521254
+  },
+  "iv_selected_features": [
+    "question_length_words",
+    "question_length_chars",
+    "question_complexity_score",
+    "context_token_count",
+    "is_open_source",
+    "multilingual_support",
+    "model_name_woe",
+    "positional_encoding_type_woe",
+    "attention_type_woe",
+    "tokenizer_type_woe"
+  ],
+  "rfe_ranking": {
+    "question_length_words": 1,
+    "question_length_chars": 1,
+    "question_complexity_score": 1,
+    "context_token_count": 1,
+    "is_open_source": 1,
+    "multilingual_support": 1,
+    "model_name_woe": 1,
+    "positional_encoding_type_woe": 1,
+    "attention_type_woe": 1,
+    "tokenizer_type_woe": 1
+  },
+  "woe_maps": {
+    "model_name": {
+      "gpt-4-0613": -0.4825559976927863,
+      "llama-2-70b-chat-hf": 0.5277758897309953
+    },
+    "positional_encoding_type": {
+      "RoPE": 0.5277758897309953,
+      "learned_absolute": -0.4825559976927863
+    },
+    "attention_type": {
+      "GQA": 0.5277758897309953,
+      "MHA": -0.4825559976927863
+    },
+    "tokenizer_type": {
+      "cl100k_BPE": -0.4825559976927863,
+      "sentencepiece_BPE": 0.5277758897309953
+    },
+    "question_category": {
+      "Coding": -0.013739175883304158,
+      "Creative": 0.11088539158979616,
+      "Fact Retrieval": 0.06446777726572964,
+      "Reasoning": -0.041744790468939766
+    }
+  },
+  "numeric_medians": {
+    "context_window_tokens": 4096.0,
+    "max_output_tokens": 2048.0,
+    "vocab_size": 32000.0,
+    "knowledge_cutoff_year": 2022.0,
+    "temperature": 0.6,
+    "top_p": 0.9,
+    "top_k": 50.0,
+    "repetition_penalty": 1.2,
+    "frequency_penalty": 0.0,
+    "presence_penalty": 0.0,
+    "max_tokens_requested": 1024.0,
+    "stop_sequences_count": 1.0,
+    "galileo_qa_no_rag": 0.65,
+    "galileo_qa_with_rag": 0.68,
+    "galileo_longform": 0.82,
+    "crag_hallucination_rate": 0.287,
+    "crag_accuracy": 0.223,
+    "question_length_words": 271.5,
+    "question_length_chars": 1729.0,
+    "question_complexity_score": 10.23,
+    "context_token_count": 335.0,
+    "is_open_source": 1.0,
+    "multilingual_support": 0.0,
+    "has_few_shot_examples": 0.0,
+    "prompt_contains_system_instructions": 0.0,
+    "is_ambiguous": 0.0,
+    "contains_negation": 1.0,
+    "model_name_woe": 0.5277758897309953,
+    "positional_encoding_type_woe": 0.5277758897309953,
+    "attention_type_woe": 0.5277758897309953,
+    "tokenizer_type_woe": 0.5277758897309953,
+    "question_category_woe": -0.041744790468939766
+  }
+}

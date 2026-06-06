@@ -16,18 +16,23 @@ Analysis and modeling pipeline for the [ReaLMistake](https://arxiv.org/abs/2404.
 │   ├── enrich_realmistake_full.py      # Add model-level features
 │   ├── enrich_question_features.py   # Add question-based features
 │   ├── train_xgboost_woe.py          # WOE + XGBoost training & evaluation
+│   ├── train_xgboost_woe_iv_rfe.py   # WOE + IV + RFE + XGBoost
 │   └── train_random_forest_woe.py    # WOE + Random Forest training & evaluation
 ├── notebooks/
 │   ├── analyze_realmistake_full.ipynb
 │   ├── view_realmistake_enriched.ipynb
 │   ├── train_xgboost_woe.ipynb
+│   ├── train_xgboost_woe_iv_rfe.ipynb
 │   └── train_random_forest_woe.ipynb
 ├── models/
 │   ├── xgboost_woe.json              # Trained XGBoost classifier
+│   ├── xgboost_woe_iv_rfe.json       # WOE + IV + RFE XGBoost classifier
 │   ├── random_forest_woe.joblib      # Trained Random Forest classifier
 │   ├── preprocessing.json            # XGBoost WOE maps & imputation values
+│   ├── xgboost_woe_iv_rfe_preprocessing.json
 │   ├── random_forest_preprocessing.json
 │   ├── metrics.json                  # XGBoost train / val / test scores
+│   ├── xgboost_woe_iv_rfe_metrics.json
 │   └── random_forest_metrics.json    # Random Forest train / val / test scores
 └── requirements.txt
 ```
@@ -258,6 +263,32 @@ Test confusion matrix (rows = true, cols = predicted):
 | True no_error | 25 | 13 |
 | True error | 21 | 76 |
 
+### XGBoost + WOE + IV + RFE
+
+```bash
+python scripts/train_xgboost_woe_iv_rfe.py
+```
+
+Or use the notebook: `notebooks/train_xgboost_woe_iv_rfe.ipynb`.
+
+- **Feature selection:** IV threshold 0.02 → 10 features, then RFE → 10 features
+- **Model:** XGBoost (300 trees, max_depth=4, `scale_pos_weight`)
+
+| Split | Accuracy | Precision | Recall | F1 | ROC-AUC |
+|-------|----------|-----------|--------|-----|---------|
+| Train | 0.903 | 0.974 | 0.890 | 0.930 | 0.972 |
+| Val | 0.704 | 0.794 | 0.794 | 0.794 | 0.756 |
+| Test | 0.756 | 0.848 | 0.804 | 0.825 | 0.739 |
+
+Selected features: `question_length_words`, `question_length_chars`, `question_complexity_score`, `context_token_count`, `is_open_source`, `multilingual_support`, `model_name_woe`, `positional_encoding_type_woe`, `attention_type_woe`, `tokenizer_type_woe`
+
+Test confusion matrix (rows = true, cols = predicted):
+
+| | Pred no_error | Pred error |
+|--|---------------|------------|
+| True no_error | 24 | 14 |
+| True error | 19 | 78 |
+
 ### Random Forest
 
 ```bash
@@ -285,10 +316,11 @@ Test confusion matrix (rows = true, cols = predicted):
 
 | Model | Accuracy | Precision | Recall | F1 | ROC-AUC |
 |-------|----------|-----------|--------|-----|---------|
-| XGBoost | 0.748 | 0.854 | 0.784 | 0.817 | 0.740 |
+| XGBoost + WOE + IV + RFE | **0.756** | 0.848 | **0.804** | **0.825** | 0.739 |
+| XGBoost | 0.748 | **0.854** | 0.784 | 0.817 | **0.740** |
 | Random Forest | 0.652 | 0.857 | 0.619 | 0.719 | 0.688 |
 
-XGBoost generalizes better on this split. Train performance is much higher than val/test for both models, indicating overfitting — partly because many features are constant per `llm_model`. Small val/test sets (135 rows each) also produce high metric variance.
+WOE + IV + RFE slightly improves test accuracy and F1 over plain XGBoost by dropping weak features. Train performance is much higher than val/test for all models, indicating overfitting — partly because many features are constant per `llm_model`. Small val/test sets (135 rows each) also produce high metric variance.
 
 ## Notebooks
 
@@ -297,6 +329,7 @@ XGBoost generalizes better on this split. Train performance is much higher than 
 | `notebooks/analyze_realmistake_full.ipynb` | EDA on base CSV: labels, models, tasks, prompt lengths |
 | `notebooks/view_realmistake_enriched.ipynb` | Full view of all 35 enriched columns |
 | `notebooks/train_xgboost_woe.ipynb` | Split → WOE → XGBoost → inference → scores |
+| `notebooks/train_xgboost_woe_iv_rfe.ipynb` | Split → WOE → IV → RFE → XGBoost → scores |
 | `notebooks/train_random_forest_woe.ipynb` | Split → WOE → Random Forest → inference → scores |
 
 Launch Jupyter:
@@ -315,6 +348,7 @@ python scripts/build_full_dataset.py
 python scripts/enrich_realmistake_full.py
 python scripts/enrich_question_features.py
 python scripts/train_xgboost_woe.py
+python scripts/train_xgboost_woe_iv_rfe.py
 python scripts/train_random_forest_woe.py
 ```
 

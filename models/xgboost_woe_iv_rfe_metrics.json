@@ -1,0 +1,78 @@
+{
+  "feature_selection": {
+    "total_features": 32,
+    "iv_selected": 10,
+    "rfe_selected": 10,
+    "selected_features": [
+      "question_length_words",
+      "question_length_chars",
+      "question_complexity_score",
+      "context_token_count",
+      "is_open_source",
+      "multilingual_support",
+      "model_name_woe",
+      "positional_encoding_type_woe",
+      "attention_type_woe",
+      "tokenizer_type_woe"
+    ]
+  },
+  "train": {
+    "split": "train",
+    "accuracy": 0.9031746031746032,
+    "precision": 0.9735576923076923,
+    "recall": 0.8901098901098901,
+    "f1": 0.9299655568312285,
+    "roc_auc": 0.9723265306122449,
+    "confusion_matrix": [
+      [
+        164,
+        11
+      ],
+      [
+        50,
+        405
+      ]
+    ]
+  },
+  "val": {
+    "split": "val",
+    "accuracy": 0.7037037037037037,
+    "precision": 0.7938144329896907,
+    "recall": 0.7938144329896907,
+    "f1": 0.7938144329896907,
+    "roc_auc": 0.7561041779707,
+    "confusion_matrix": [
+      [
+        18,
+        20
+      ],
+      [
+        20,
+        77
+      ]
+    ]
+  },
+  "test": {
+    "split": "test",
+    "accuracy": 0.7555555555555555,
+    "precision": 0.8478260869565217,
+    "recall": 0.8041237113402062,
+    "f1": 0.8253968253968254,
+    "roc_auc": 0.7386055344546933,
+    "confusion_matrix": [
+      [
+        24,
+        14
+      ],
+      [
+        19,
+        78
+      ]
+    ]
+  },
+  "inference_sample": {
+    "n_rows": 135,
+    "positive_predictions": 92,
+    "mean_predicted_probability": 0.6526848673820496
+  }
+}
