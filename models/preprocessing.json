@@ -1,0 +1,94 @@
+{
+  "feature_names": [
+    "context_window_tokens",
+    "max_output_tokens",
+    "vocab_size",
+    "knowledge_cutoff_year",
+    "temperature",
+    "top_p",
+    "top_k",
+    "repetition_penalty",
+    "frequency_penalty",
+    "presence_penalty",
+    "max_tokens_requested",
+    "stop_sequences_count",
+    "galileo_qa_no_rag",
+    "galileo_qa_with_rag",
+    "galileo_longform",
+    "crag_hallucination_rate",
+    "crag_accuracy",
+    "question_length_words",
+    "question_length_chars",
+    "question_complexity_score",
+    "context_token_count",
+    "is_open_source",
+    "multilingual_support",
+    "has_few_shot_examples",
+    "prompt_contains_system_instructions",
+    "is_ambiguous",
+    "contains_negation",
+    "model_name_woe",
+    "positional_encoding_type_woe",
+    "attention_type_woe",
+    "tokenizer_type_woe",
+    "question_category_woe"
+  ],
+  "woe_maps": {
+    "model_name": {
+      "gpt-4-0613": -0.4825559976927863,
+      "llama-2-70b-chat-hf": 0.5277758897309953
+    },
+    "positional_encoding_type": {
+      "RoPE": 0.5277758897309953,
+      "learned_absolute": -0.4825559976927863
+    },
+    "attention_type": {
+      "GQA": 0.5277758897309953,
+      "MHA": -0.4825559976927863
+    },
+    "tokenizer_type": {
+      "cl100k_BPE": -0.4825559976927863,
+      "sentencepiece_BPE": 0.5277758897309953
+    },
+    "question_category": {
+      "Coding": -0.013739175883304158,
+      "Creative": 0.11088539158979616,
+      "Fact Retrieval": 0.06446777726572964,
+      "Reasoning": -0.041744790468939766
+    }
+  },
+  "numeric_medians": {
+    "context_window_tokens": 4096.0,
+    "max_output_tokens": 2048.0,
+    "vocab_size": 32000.0,
+    "knowledge_cutoff_year": 2022.0,
+    "temperature": 0.6,
+    "top_p": 0.9,
+    "top_k": 50.0,
+    "repetition_penalty": 1.2,
+    "frequency_penalty": 0.0,
+    "presence_penalty": 0.0,
+    "max_tokens_requested": 1024.0,
+    "stop_sequences_count": 1.0,
+    "galileo_qa_no_rag": 0.65,
+    "galileo_qa_with_rag": 0.68,
+    "galileo_longform": 0.82,
+    "crag_hallucination_rate": 0.287,
+    "crag_accuracy": 0.223,
+    "question_length_words": 271.5,
+    "question_length_chars": 1729.0,
+    "question_complexity_score": 10.23,
+    "context_token_count": 335.0,
+    "is_open_source": 1.0,
+    "multilingual_support": 0.0,
+    "has_few_shot_examples": 0.0,
+    "prompt_contains_system_instructions": 0.0,
+    "is_ambiguous": 0.0,
+    "contains_negation": 1.0,
+    "model_name_woe": 0.5277758897309953,
+    "positional_encoding_type_woe": 0.5277758897309953,
+    "attention_type_woe": 0.5277758897309953,
+    "tokenizer_type_woe": 0.5277758897309953,
+    "question_category_woe": -0.041744790468939766
+  }
+}
