@@ -15,15 +15,20 @@ Analysis and modeling pipeline for the [ReaLMistake](https://arxiv.org/abs/2404.
 │   ├── build_full_dataset.py         # JSONL → realmistake_full.csv
 │   ├── enrich_realmistake_full.py      # Add model-level features
 │   ├── enrich_question_features.py   # Add question-based features
-│   └── train_xgboost_woe.py          # WOE + XGBoost training & evaluation
+│   ├── train_xgboost_woe.py          # WOE + XGBoost training & evaluation
+│   └── train_random_forest_woe.py    # WOE + Random Forest training & evaluation
 ├── notebooks/
 │   ├── analyze_realmistake_full.ipynb
 │   ├── view_realmistake_enriched.ipynb
-│   └── train_xgboost_woe.ipynb
+│   ├── train_xgboost_woe.ipynb
+│   └── train_random_forest_woe.ipynb
 ├── models/
-│   ├── xgboost_woe.json              # Trained classifier
-│   ├── preprocessing.json            # WOE maps & imputation values
-│   └── metrics.json                  # Train / val / test scores
+│   ├── xgboost_woe.json              # Trained XGBoost classifier
+│   ├── random_forest_woe.joblib      # Trained Random Forest classifier
+│   ├── preprocessing.json            # XGBoost WOE maps & imputation values
+│   ├── random_forest_preprocessing.json
+│   ├── metrics.json                  # XGBoost train / val / test scores
+│   └── random_forest_metrics.json    # Random Forest train / val / test scores
 └── requirements.txt
 ```
 
@@ -221,7 +226,16 @@ Computed from the `question` column.
 
 ## 4. Model training
 
-Predict `error` vs `no_error` with XGBoost on engineered features (WOE encoding for categoricals, median imputation for numerics).
+Predict `error` vs `no_error` on engineered features (WOE encoding for categoricals, median imputation for numerics).
+
+### Pipeline (shared)
+
+1. **Target:** `error` → 1, `no_error` → 0
+2. **Split:** stratified 70 / 15 / 15 → 630 train · 135 val · 135 test
+3. **Features:** 21 numeric + 6 boolean + 5 WOE-encoded categoricals = **32 features** (raw `question` excluded)
+4. **Artifacts:** saved to `models/`
+
+### XGBoost
 
 ```bash
 python scripts/train_xgboost_woe.py
@@ -229,15 +243,7 @@ python scripts/train_xgboost_woe.py
 
 Or use the notebook: `notebooks/train_xgboost_woe.ipynb`.
 
-### Pipeline
-
-1. **Target:** `error` → 1, `no_error` → 0
-2. **Split:** stratified 70 / 15 / 15 → 630 train · 135 val · 135 test
-3. **Features:** 21 numeric + 6 boolean + 5 WOE-encoded categoricals = **32 features** (raw `question` excluded)
-4. **Model:** XGBoost (300 trees, max_depth=4, `scale_pos_weight` for class imbalance)
-5. **Artifacts:** saved to `models/`
-
-### Results (test set)
+- **Model:** XGBoost (300 trees, max_depth=4, `scale_pos_weight` for class imbalance)
 
 | Split | Accuracy | Precision | Recall | F1 | ROC-AUC |
 |-------|----------|-----------|--------|-----|---------|
@@ -252,7 +258,37 @@ Test confusion matrix (rows = true, cols = predicted):
 | True no_error | 25 | 13 |
 | True error | 21 | 76 |
 
-Train performance is much higher than val/test, indicating overfitting — partly because many features are constant per `llm_model`. Small val/test sets (135 rows each) also produce high metric variance.
+### Random Forest
+
+```bash
+python scripts/train_random_forest_woe.py
+```
+
+Or use the notebook: `notebooks/train_random_forest_woe.ipynb`.
+
+- **Model:** Random Forest (300 trees, max_depth=4, `class_weight='balanced'`)
+
+| Split | Accuracy | Precision | Recall | F1 | ROC-AUC |
+|-------|----------|-----------|--------|-----|---------|
+| Train | 0.721 | 0.929 | 0.664 | 0.774 | 0.875 |
+| Val | 0.622 | 0.788 | 0.649 | 0.712 | 0.727 |
+| Test | 0.652 | 0.857 | 0.619 | 0.719 | 0.688 |
+
+Test confusion matrix (rows = true, cols = predicted):
+
+| | Pred no_error | Pred error |
+|--|---------------|------------|
+| True no_error | 28 | 10 |
+| True error | 37 | 60 |
+
+### Model comparison (test set)
+
+| Model | Accuracy | Precision | Recall | F1 | ROC-AUC |
+|-------|----------|-----------|--------|-----|---------|
+| XGBoost | 0.748 | 0.854 | 0.784 | 0.817 | 0.740 |
+| Random Forest | 0.652 | 0.857 | 0.619 | 0.719 | 0.688 |
+
+XGBoost generalizes better on this split. Train performance is much higher than val/test for both models, indicating overfitting — partly because many features are constant per `llm_model`. Small val/test sets (135 rows each) also produce high metric variance.
 
 ## Notebooks
 
@@ -261,6 +297,7 @@ Train performance is much higher than val/test, indicating overfitting — partl
 | `notebooks/analyze_realmistake_full.ipynb` | EDA on base CSV: labels, models, tasks, prompt lengths |
 | `notebooks/view_realmistake_enriched.ipynb` | Full view of all 35 enriched columns |
 | `notebooks/train_xgboost_woe.ipynb` | Split → WOE → XGBoost → inference → scores |
+| `notebooks/train_random_forest_woe.ipynb` | Split → WOE → Random Forest → inference → scores |
 
 Launch Jupyter:
 
@@ -278,6 +315,7 @@ python scripts/build_full_dataset.py
 python scripts/enrich_realmistake_full.py
 python scripts/enrich_question_features.py
 python scripts/train_xgboost_woe.py
+python scripts/train_random_forest_woe.py
 ```
 
 ## References
