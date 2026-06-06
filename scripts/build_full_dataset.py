@@ -14,24 +14,6 @@ TASK_DIRS = [
 ]
 
 
-def extract_question(row: dict) -> str:
-    text = row["input"]
-    task = row["metadata"]["task_name"]
-
-    if task == "answerability_classification" and "Question:\n" in text:
-        return text.split("Question:\n", 1)[1].strip()
-
-    if task == "finegrained_fact_verification":
-        for line in text.split("\n"):
-            if line.startswith("Claim"):
-                return line.split(":", 1)[1].strip()
-
-    if task == "math_problem_generation" and "Specific Requirements:\n" in text:
-        return text.split("Specific Requirements:\n", 1)[1].strip()
-
-    return text.strip()
-
-
 def load_rows() -> list[dict]:
     rows = []
     for task_dir in TASK_DIRS:
@@ -41,7 +23,7 @@ def load_rows() -> list[dict]:
                     row = json.loads(line)
                     rows.append(
                         {
-                            "question": extract_question(row),
+                            "question": row["input"].strip(),
                             "llm_model": row["metadata"]["llm_response_model"],
                             "error": row["error_label"],
                         }
