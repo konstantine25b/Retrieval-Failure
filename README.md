@@ -36,6 +36,87 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+## Sample data
+
+Examples below are truncated for readability. Full rows live in `data/realmistake/`, `data/realmistake_full.csv`, and `data/realmistake_full_enriched.csv`.
+
+### Source JSONL (`data/realmistake/example.jsonl`)
+
+```json
+{
+  "input": "Generate a math word problem that satisfies the following requirements. First, provide the generated question. Second, generate a step-by-step solution...\n\nSpecific Requirements:\n* The problem statement should include the phrase \"Marla completes 32 laps around the track per hour\".\n* The solution involves division and rounding off to the nearest whole number.",
+  "llm_response": "Question:\nMarla completes 32 laps around the track per hour. If the track is 400 meters long, how many kilometers does Marla run in 2.5 hours?\n\nSolution:\nStep 1: ...\nSo, Marla runs 32 kilometers in 2.5 hours.",
+  "error_label": "error",
+  "human_explanation": "The question does not involve relative speed and rounding off to the nearest whole number, which are in the requirements. In addition, the solution does not include numbers with two decimal places.",
+  "error_categories": ["Instruction-Following"],
+  "metadata": {
+    "id": "math_problem_generation_66_gpt-4-0613",
+    "task_name": "math_problem_generation",
+    "task_source": "aqua",
+    "llm_response_model": "gpt-4-0613",
+    "dataset": "realmistake",
+    "difficulty": "difficult"
+  }
+}
+```
+
+### Base CSV (`data/realmistake_full.csv`)
+
+| question | llm_model | error |
+|----------|-----------|-------|
+| Generate a math word problem that satisfies the following requirements. First, provide the generated question. Second, generate a step-by-step solution for the generated question… *(1,758 chars)* | `meta-llama/Llama-2-70b-chat-hf` | `error` |
+| We provide a pair of a claim and evidence. The claim is a sentence in a Wikipedia article… *(3,500+ chars)* | `gpt-4-0613` | `error` |
+| Answer the following question. Assume you are on Jan 18, 2018 and questions that require knowledge after this date should be classified as unanswerable… *(744 chars)* | `gpt-4-0613` | `no_error` |
+
+### Enriched CSV (`data/realmistake_full_enriched.csv`)
+
+Same rows as above, plus 32 engineered features. Example (math word problem, Llama 2 70B):
+
+| Column | Value |
+|--------|-------|
+| `question` | Generate a math word problem that satisfies the following requirements… *(truncated)* |
+| `llm_model` | `meta-llama/Llama-2-70b-chat-hf` |
+| `error` | `error` |
+| `model_name` | `llama-2-70b-chat-hf` |
+| `context_window_tokens` | 4096 |
+| `max_output_tokens` | 2048 |
+| `attention_type` | GQA |
+| `temperature` | 0.6 |
+| `galileo_qa_no_rag` | 0.65 |
+| `crag_hallucination_rate` | 0.287 |
+| `question_length_words` | 274 |
+| `question_length_chars` | 1758 |
+| `question_complexity_score` | 10.51 |
+| `question_category` | Reasoning |
+| `contains_negation` | True |
+| `context_token_count` | 342 |
+| `has_few_shot_examples` | False |
+
+Example (fact verification, Llama 2 70B):
+
+| Column | Value |
+|--------|-------|
+| `question` | We provide a pair of a claim and evidence. The claim is a sentence in a Wikipedia article… *(truncated)* |
+| `llm_model` | `meta-llama/Llama-2-70b-chat-hf` |
+| `error` | `error` |
+| `question_category` | Fact Retrieval |
+| `question_length_words` | 549 |
+| `context_token_count` | 686 |
+| `galileo_qa_no_rag` | 0.65 |
+| `crag_accuracy` | 0.223 |
+
+### Dataset summary
+
+| | Count |
+|--|-------|
+| Total rows | 900 |
+| `error` | 649 (72.1%) |
+| `no_error` | 251 (27.9%) |
+| GPT-4-0613 | 420 |
+| Llama 2 70B | 480 |
+| Reasoning prompts | 585 |
+| Fact Retrieval prompts | 241 |
+
 ## 1. Download data
 
 Fetches ReaLMistake from Hugging Face (`ryokamoi/realmistake`) or falls back to the official password-protected zip.
