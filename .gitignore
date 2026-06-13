@@ -33,6 +33,8 @@ Thumbs.db
 .cache/
 .huggingface/
 
+data/misprompt/*.json
+
 .idea/
 .vscode/
 *.swp

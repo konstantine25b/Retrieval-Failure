@@ -8,12 +8,22 @@ Analysis and modeling pipeline for the [ReaLMistake](https://arxiv.org/abs/2404.
 .
 ├── data/
 │   ├── realmistake/                  # Source JSONL (3 tasks × 2 models)
+│   ├── misprompt/                    # Mis-prompt JSON (downloaded, gitignored)
 │   ├── realmistake_full.csv          # Base tabular export (900 rows)
-│   └── realmistake_full_enriched.csv # Full feature set (900 rows × 35 cols)
+│   ├── misprompt_full.csv            # Mis-prompt export (29,392 rows)
+│   ├── combined_full.csv             # ReaLMistake + Mis-prompt (30,292 rows)
+│   ├── realmistake_full_enriched.csv # Full feature set (900 rows × 35 cols)
+│   ├── misprompt_full_enriched.csv   # Mis-prompt enriched (29,392 × 41 cols)
+│   └── combined_full_enriched.csv    # Combined enriched (30,292 × 42 cols)
 ├── scripts/
 │   ├── download_realmistake.py       # Download dataset from Hugging Face or zip
+│   ├── download_misprompt.py         # Download Mis-prompt from GitHub
 │   ├── build_full_dataset.py         # JSONL → realmistake_full.csv
+│   ├── build_misprompt_dataset.py    # Mis-prompt JSON → misprompt_full.csv
+│   ├── build_combined_dataset.py     # Merge ReaLMistake + Mis-prompt
 │   ├── enrich_realmistake_full.py      # Add model-level features
+│   ├── enrich_misprompt_full.py      # Enrich Mis-prompt CSV
+│   ├── enrich_combined_full.py       # Enrich combined CSV
 │   ├── enrich_question_features.py   # Add question-based features
 │   ├── train_xgboost_woe.py          # WOE + XGBoost training & evaluation
 │   ├── train_xgboost_woe_iv_rfe.py   # WOE + IV + RFE + XGBoost
@@ -171,6 +181,46 @@ Creates `data/realmistake_full.csv` (900 rows):
 | `question` | Task prompt (from `input`) |
 | `llm_model` | `gpt-4-0613` or `meta-llama/Llama-2-70b-chat-hf` |
 | `error` | `error` (649) or `no_error` (251) |
+
+## 2b. Mis-prompt dataset (ACL 2025)
+
+Proactive error-handling benchmark: flawed user prompts with expert labels and gold responses.
+
+```bash
+python scripts/download_misprompt.py
+python scripts/build_misprompt_dataset.py
+python scripts/enrich_misprompt_full.py
+```
+
+Source: [Jiayi-Zeng/mis-prompt](https://github.com/Jiayi-Zeng/mis-prompt)
+
+Creates `data/misprompt_full.csv` (29,392 rows from train/dev/eval splits):
+
+| Column | Description |
+|--------|-------------|
+| `question` | User prompt (`prompt` in source JSON) |
+| `llm_model` | `gpt-4o` (Mis-prompt data generated with GPT-4o) |
+| `error` | `error` (14,696) or `no_error` (14,696) — source uses `correct` → `no_error` |
+| `split` | `train` / `dev` / `eval` |
+| `primary_category` | Language / Incomplete / Factual / Logical Errors |
+| `secondary_category` | Fine-grained error type (14 categories) |
+| `explanation` | Why the prompt is wrong (error rows only) |
+| `gold_answer` | Ideal proactive error-handling response |
+
+Combine with ReaLMistake for larger training data:
+
+```bash
+python scripts/build_combined_dataset.py
+python scripts/enrich_combined_full.py
+```
+
+Output: `data/combined_full.csv` (30,292 rows) and `data/combined_full_enriched.csv`.
+
+| Source | Rows | error | no_error |
+|--------|------|-------|----------|
+| ReaLMistake | 900 | 649 | 251 |
+| Mis-prompt | 29,392 | 14,696 | 14,696 |
+| Combined | 30,292 | 15,345 | 14,947 |
 
 ## 3. Feature enrichment
 
@@ -345,7 +395,12 @@ source venv/bin/activate
 
 python scripts/download_realmistake.py
 python scripts/build_full_dataset.py
+python scripts/download_misprompt.py
+python scripts/build_misprompt_dataset.py
+python scripts/build_combined_dataset.py
 python scripts/enrich_realmistake_full.py
+python scripts/enrich_misprompt_full.py
+python scripts/enrich_combined_full.py
 python scripts/enrich_question_features.py
 python scripts/train_xgboost_woe.py
 python scripts/train_xgboost_woe_iv_rfe.py
@@ -355,5 +410,7 @@ python scripts/train_random_forest_woe.py
 ## References
 
 - Kamoi et al., [Evaluating LLMs at Detecting Errors in LLM Responses](https://arxiv.org/abs/2404.03602) (COLM 2024)
+- Zeng et al., [Mis-prompt: Benchmarking Large Language Models for Proactive Error Handling](https://arxiv.org/abs/2506.00064) (ACL 2025)
 - Dataset: [ryokamoi/realmistake](https://huggingface.co/datasets/ryokamoi/realmistake)
+- Dataset: [Jiayi-Zeng/mis-prompt](https://github.com/Jiayi-Zeng/mis-prompt)
 - Code: [psunlpgroup/ReaLMistake](https://github.com/psunlpgroup/ReaLMistake)

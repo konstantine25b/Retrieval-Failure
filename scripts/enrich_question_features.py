@@ -49,7 +49,7 @@ def classify_question_category(question: str) -> str:
 
 
 def count_tokens(question: str, llm_model: str) -> int:
-    if llm_model == "gpt-4-0613":
+    if llm_model in {"gpt-4-0613", "gpt-4o"}:
         return len(GPT4_ENCODING.encode(question))
     return int(len(question.split()) * 1.25)
 
