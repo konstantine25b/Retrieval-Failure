@@ -28,6 +28,7 @@ Analysis and modeling pipeline for the [ReaLMistake](https://arxiv.org/abs/2404.
 │   ├── train_xgboost_woe.py          # WOE + XGBoost training & evaluation
 │   ├── train_xgboost_woe_iv_rfe.py   # WOE + IV + RFE + XGBoost
 │   ├── train_xgboost_combined_woe_iv_rfe.py  # Combined data WOE + IV + RFE + XGBoost
+│   ├── train_xgboost_combined_woe_iv_rfe_complex.py  # Combined data, deeper XGBoost
 │   └── train_random_forest_woe.py    # WOE + Random Forest training & evaluation
 ├── notebooks/
 │   ├── analyze_realmistake_full.ipynb
@@ -35,19 +36,23 @@ Analysis and modeling pipeline for the [ReaLMistake](https://arxiv.org/abs/2404.
 │   ├── train_xgboost_woe.ipynb
 │   ├── train_xgboost_woe_iv_rfe.ipynb
 │   ├── train_xgboost_combined_woe_iv_rfe.ipynb
+│   ├── train_xgboost_combined_woe_iv_rfe_complex.ipynb
 │   └── train_random_forest_woe.ipynb
 ├── models/
 │   ├── xgboost_woe.json              # Trained XGBoost classifier
 │   ├── xgboost_woe_iv_rfe.json       # WOE + IV + RFE XGBoost classifier
 │   ├── xgboost_combined_woe_iv_rfe.json  # Combined data WOE + IV + RFE XGBoost
+│   ├── xgboost_combined_woe_iv_rfe_complex.json  # Combined data, deeper XGBoost
 │   ├── random_forest_woe.joblib      # Trained Random Forest classifier
 │   ├── preprocessing.json            # XGBoost WOE maps & imputation values
 │   ├── xgboost_woe_iv_rfe_preprocessing.json
 │   ├── xgboost_combined_woe_iv_rfe_preprocessing.json
+│   ├── xgboost_combined_woe_iv_rfe_complex_preprocessing.json
 │   ├── random_forest_preprocessing.json
 │   ├── metrics.json                  # XGBoost train / val / test scores
 │   ├── xgboost_woe_iv_rfe_metrics.json
 │   ├── xgboost_combined_woe_iv_rfe_metrics.json
+│   ├── xgboost_combined_woe_iv_rfe_complex_metrics.json
 │   └── random_forest_metrics.json    # Random Forest train / val / test scores
 └── requirements.txt
 ```
@@ -372,6 +377,33 @@ Test confusion matrix (rows = true, cols = predicted):
 | True no_error | 1773 | 469 |
 | True error | 628 | 1674 |
 
+### XGBoost + WOE + IV + RFE (Combined, complex model)
+
+```bash
+python scripts/train_xgboost_combined_woe_iv_rfe_complex.py
+```
+
+Or use the notebook: `notebooks/train_xgboost_combined_woe_iv_rfe_complex.ipynb`.
+
+Same data, split, and feature selection as the baseline combined model. XGBoost is deeper and regularized:
+
+- **Model:** 1000 trees (early stopping at 655), max_depth=7, lr=0.02, subsample/colsample=0.8, min_child_weight=3, gamma=0.1, L1/L2 reg
+
+| Split | Accuracy | Precision | Recall | F1 | ROC-AUC |
+|-------|----------|-----------|--------|-----|---------|
+| Train | 0.790 | 0.810 | 0.763 | 0.786 | 0.874 |
+| Val | 0.753 | 0.767 | 0.737 | 0.752 | 0.834 |
+| Test | 0.756 | 0.775 | 0.732 | 0.752 | **0.832** |
+
+Test confusion matrix (rows = true, cols = predicted):
+
+| | Pred no_error | Pred error |
+|--|---------------|------------|
+| True no_error | 1752 | 490 |
+| True error | 618 | 1684 |
+
+Compared to the baseline combined model, the complex variant improves val F1 (+0.7 pp) and test ROC-AUC (+0.3 pp) with a smaller train–test gap, at the cost of slightly lower test accuracy (−0.3 pp).
+
 ### Random Forest
 
 ```bash
@@ -399,12 +431,13 @@ Test confusion matrix (rows = true, cols = predicted):
 
 | Model | Data | Accuracy | Precision | Recall | F1 | ROC-AUC |
 |-------|------|----------|-----------|--------|-----|---------|
-| XGBoost + WOE + IV + RFE (Combined) | 30,292 | **0.759** | 0.781 | 0.727 | 0.753 | **0.829** |
+| XGBoost + WOE + IV + RFE (Combined, complex) | 30,292 | 0.756 | 0.775 | 0.732 | 0.752 | **0.832** |
+| XGBoost + WOE + IV + RFE (Combined) | 30,292 | **0.759** | **0.781** | 0.727 | **0.753** | 0.829 |
 | XGBoost + WOE + IV + RFE | 900 | 0.756 | **0.848** | **0.804** | **0.825** | 0.739 |
 | XGBoost | 900 | 0.748 | 0.854 | 0.784 | 0.817 | 0.740 |
 | Random Forest | 900 | 0.652 | 0.857 | 0.619 | 0.719 | 0.688 |
 
-The combined model generalizes better (ROC-AUC 0.829 vs 0.739) with a much larger test set (4,544 vs 135 rows). ReaLMistake-only models achieve higher precision/recall on their small test split but show larger train–test gaps. Model-level WOE features remain useful despite 97% of combined rows using `gpt-4o`.
+Combined models generalize better (ROC-AUC ~0.83 vs 0.739) with a much larger test set (4,544 vs 135 rows). The complex XGBoost slightly improves ranking (ROC-AUC 0.832) and val performance; the baseline combined model still has marginally higher test accuracy/F1. ReaLMistake-only models achieve higher precision/recall on their small test split but show larger train–test gaps.
 
 ## Notebooks
 
@@ -415,6 +448,7 @@ The combined model generalizes better (ROC-AUC 0.829 vs 0.739) with a much large
 | `notebooks/train_xgboost_woe.ipynb` | Split → WOE → XGBoost → inference → scores |
 | `notebooks/train_xgboost_woe_iv_rfe.ipynb` | Split → WOE → IV → RFE → XGBoost → scores |
 | `notebooks/train_xgboost_combined_woe_iv_rfe.ipynb` | Combined data → WOE → IV → RFE → XGBoost → scores |
+| `notebooks/train_xgboost_combined_woe_iv_rfe_complex.ipynb` | Combined data → WOE → IV → RFE → deep XGBoost → scores |
 | `notebooks/train_random_forest_woe.ipynb` | Split → WOE → Random Forest → inference → scores |
 
 Launch Jupyter:
@@ -440,6 +474,7 @@ python scripts/enrich_question_features.py
 python scripts/train_xgboost_woe.py
 python scripts/train_xgboost_woe_iv_rfe.py
 python scripts/train_xgboost_combined_woe_iv_rfe.py
+python scripts/train_xgboost_combined_woe_iv_rfe_complex.py
 python scripts/train_random_forest_woe.py
 ```
 

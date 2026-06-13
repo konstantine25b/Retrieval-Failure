@@ -1,0 +1,94 @@
+{
+  "dataset": "combined_full_enriched.csv",
+  "model_variant": "complex",
+  "feature_selection": {
+    "total_features": 32,
+    "iv_selected": 11,
+    "rfe_selected": 11,
+    "selected_features": [
+      "question_length_chars",
+      "question_length_words",
+      "contains_negation",
+      "context_token_count",
+      "model_name_woe",
+      "tokenizer_type_woe",
+      "attention_type_woe",
+      "positional_encoding_type_woe",
+      "multilingual_support",
+      "is_open_source",
+      "question_complexity_score"
+    ]
+  },
+  "model_params": {
+    "n_estimators": 1000,
+    "max_depth": 7,
+    "learning_rate": 0.02,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "min_child_weight": 3,
+    "gamma": 0.1,
+    "reg_alpha": 0.1,
+    "reg_lambda": 1.0,
+    "early_stopping_rounds": 50,
+    "best_iteration": 657
+  },
+  "train": {
+    "split": "train",
+    "accuracy": 0.7900396151669496,
+    "precision": 0.8108134822575862,
+    "recall": 0.7637091518480589,
+    "f1": 0.7865567168472528,
+    "roc_auc": 0.8745144231360872,
+    "confusion_matrix": [
+      [
+        8549,
+        1914
+      ],
+      [
+        2538,
+        8203
+      ]
+    ]
+  },
+  "val": {
+    "split": "val",
+    "accuracy": 0.7526408450704225,
+    "precision": 0.7674841053587648,
+    "recall": 0.7341442224152911,
+    "f1": 0.7504440497335702,
+    "roc_auc": 0.8338785999220318,
+    "confusion_matrix": [
+      [
+        1730,
+        512
+      ],
+      [
+        612,
+        1690
+      ]
+    ]
+  },
+  "test": {
+    "split": "test",
+    "accuracy": 0.7548415492957746,
+    "precision": 0.7727272727272727,
+    "recall": 0.7311033883579496,
+    "f1": 0.7513392857142858,
+    "roc_auc": 0.8319670828841382,
+    "confusion_matrix": [
+      [
+        1747,
+        495
+      ],
+      [
+        619,
+        1683
+      ]
+    ]
+  },
+  "inference_sample": {
+    "n_rows": 4544,
+    "positive_predictions": 2178,
+    "mean_predicted_probability": 0.5018087029457092
+  }
+}
