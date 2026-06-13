@@ -1,0 +1,80 @@
+{
+  "dataset": "combined_full_enriched.csv",
+  "feature_selection": {
+    "total_features": 32,
+    "iv_selected": 11,
+    "rfe_selected": 11,
+    "selected_features": [
+      "question_length_chars",
+      "question_length_words",
+      "contains_negation",
+      "context_token_count",
+      "model_name_woe",
+      "tokenizer_type_woe",
+      "attention_type_woe",
+      "positional_encoding_type_woe",
+      "multilingual_support",
+      "is_open_source",
+      "question_complexity_score"
+    ]
+  },
+  "train": {
+    "split": "train",
+    "accuracy": 0.7666006413884173,
+    "precision": 0.7936524031636585,
+    "recall": 0.7287031002699935,
+    "f1": 0.7597922632626316,
+    "roc_auc": 0.8491917195402087,
+    "confusion_matrix": [
+      [
+        8428,
+        2035
+      ],
+      [
+        2914,
+        7827
+      ]
+    ]
+  },
+  "val": {
+    "split": "val",
+    "accuracy": 0.7475792253521126,
+    "precision": 0.7655172413793103,
+    "recall": 0.7232841007819287,
+    "f1": 0.743801652892562,
+    "roc_auc": 0.8302080531919264,
+    "confusion_matrix": [
+      [
+        1732,
+        510
+      ],
+      [
+        637,
+        1665
+      ]
+    ]
+  },
+  "test": {
+    "split": "test",
+    "accuracy": 0.7568221830985915,
+    "precision": 0.780327868852459,
+    "recall": 0.7237185056472633,
+    "f1": 0.7509578544061303,
+    "roc_auc": 0.8290732140767327,
+    "confusion_matrix": [
+      [
+        1773,
+        469
+      ],
+      [
+        636,
+        1666
+      ]
+    ]
+  },
+  "inference_sample": {
+    "n_rows": 4544,
+    "positive_predictions": 2135,
+    "mean_predicted_probability": 0.5015917420387268
+  }
+}
