@@ -1,0 +1,93 @@
+{
+  "dataset": "mmlu_pro_full_enriched.csv",
+  "model_variant": "complex",
+  "feature_selection": {
+    "total_features": 32,
+    "iv_selected": 32,
+    "rfe_selected": 15,
+    "selected_features": [
+      "model_name_woe",
+      "context_token_count",
+      "question_complexity_score",
+      "question_length_words",
+      "vocab_size",
+      "is_open_source",
+      "positional_encoding_type_woe",
+      "question_category_woe",
+      "top_p",
+      "crag_hallucination_rate",
+      "temperature",
+      "galileo_qa_no_rag",
+      "galileo_qa_with_rag",
+      "crag_accuracy",
+      "galileo_longform"
+    ]
+  },
+  "model_params": {
+    "n_estimators": 300,
+    "max_depth": 7,
+    "min_samples_split": 5,
+    "min_samples_leaf": 2,
+    "max_features": 0.8,
+    "class_weight": "balanced"
+  },
+  "train": {
+    "split": "train",
+    "accuracy": 0.6889547700494109,
+    "precision": 0.6905963418959316,
+    "recall": 0.6884337592807718,
+    "f1": 0.6895133549170377,
+    "roc_auc": 0.751362091516435,
+    "confusion_matrix": [
+      [
+        135593,
+        61067
+      ],
+      [
+        61687,
+        136303
+      ]
+    ]
+  },
+  "val": {
+    "split": "val",
+    "accuracy": 0.6871748178980229,
+    "precision": 0.6887675507020281,
+    "recall": 0.6868032149338864,
+    "f1": 0.6877839802674283,
+    "roc_auc": 0.7498167807033028,
+    "confusion_matrix": [
+      [
+        28974,
+        13167
+      ],
+      [
+        13288,
+        29139
+      ]
+    ]
+  },
+  "test": {
+    "split": "test",
+    "accuracy": 0.6847544608544502,
+    "precision": 0.686393190684478,
+    "recall": 0.6842576661088458,
+    "f1": 0.6853237647836453,
+    "roc_auc": 0.7463271689427687,
+    "confusion_matrix": [
+      [
+        28878,
+        13264
+      ],
+      [
+        13396,
+        29031
+      ]
+    ]
+  },
+  "inference_sample": {
+    "n_rows": 84569,
+    "positive_predictions": 42295,
+    "mean_predicted_probability": 0.5003725877943307
+  }
+}
