@@ -1,0 +1,98 @@
+{
+  "dataset": "mmlu_pro_full_enriched.csv",
+  "model_variant": "complex",
+  "feature_selection": {
+    "total_features": 32,
+    "iv_selected": 32,
+    "rfe_selected": 15,
+    "selected_features": [
+      "model_name_woe",
+      "contains_negation",
+      "context_token_count",
+      "question_length_chars",
+      "question_complexity_score",
+      "question_length_words",
+      "max_output_tokens",
+      "context_window_tokens",
+      "tokenizer_type_woe",
+      "question_category_woe",
+      "temperature",
+      "top_p",
+      "crag_hallucination_rate",
+      "galileo_qa_with_rag",
+      "galileo_longform"
+    ]
+  },
+  "model_params": {
+    "n_estimators": 1000,
+    "max_depth": 7,
+    "learning_rate": 0.02,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "min_child_weight": 3,
+    "gamma": 0.1,
+    "reg_alpha": 0.1,
+    "reg_lambda": 1.0,
+    "early_stopping_rounds": 50,
+    "best_iteration": 999
+  },
+  "train": {
+    "split": "train",
+    "accuracy": 0.7423337134169518,
+    "precision": 0.7398149254920711,
+    "recall": 0.7502550633870397,
+    "f1": 0.7449984201577836,
+    "roc_auc": 0.8229358123097261,
+    "confusion_matrix": [
+      [
+        144419,
+        52241
+      ],
+      [
+        49447,
+        148543
+      ]
+    ]
+  },
+  "val": {
+    "split": "val",
+    "accuracy": 0.7309502412259956,
+    "precision": 0.7286185739518453,
+    "recall": 0.7389398260541636,
+    "f1": 0.7337429056228424,
+    "roc_auc": 0.8094774295538336,
+    "confusion_matrix": [
+      [
+        30464,
+        11677
+      ],
+      [
+        11076,
+        31351
+      ]
+    ]
+  },
+  "test": {
+    "split": "test",
+    "accuracy": 0.7301729948326219,
+    "precision": 0.7283185840707964,
+    "recall": 0.7371249440214958,
+    "f1": 0.7326953038059203,
+    "roc_auc": 0.8075717094582402,
+    "confusion_matrix": [
+      [
+        30476,
+        11666
+      ],
+      [
+        11153,
+        31274
+      ]
+    ]
+  },
+  "inference_sample": {
+    "n_rows": 84569,
+    "positive_predictions": 42940,
+    "mean_predicted_probability": 0.5004072785377502
+  }
+}
