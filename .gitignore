@@ -34,6 +34,9 @@ Thumbs.db
 .huggingface/
 
 data/misprompt/*.json
+data/mmlu_pro/
+data/mmlu_pro_full.csv
+data/combined_full.csv
 
 .idea/
 .vscode/

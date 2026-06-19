@@ -1,6 +1,6 @@
 # Retrieval Failure
 
-Analysis and modeling pipeline for the [ReaLMistake](https://arxiv.org/abs/2404.03602) benchmark: LLM error detection on 900 expert-annotated examples from GPT-4 and Llama 2 70B across three tasks.
+Analysis and modeling pipeline for LLM error detection across multiple benchmarks: [ReaLMistake](https://arxiv.org/abs/2404.03602) (900 expert-annotated examples), [Mis-prompt](https://arxiv.org/abs/2506.00064) (29,392 proactive error-handling prompts), and [MMLU-Pro](https://arxiv.org/abs/2406.01574) (563,787 model–question outcomes from 47 LLMs).
 
 ## Project structure
 
@@ -9,18 +9,22 @@ Analysis and modeling pipeline for the [ReaLMistake](https://arxiv.org/abs/2404.
 ├── data/
 │   ├── realmistake/                  # Source JSONL (3 tasks × 2 models)
 │   ├── misprompt/                    # Mis-prompt JSON (downloaded, gitignored)
+│   ├── mmlu_pro/                     # MMLU-Pro eval JSON (downloaded)
 │   ├── realmistake_full.csv          # Base tabular export (900 rows)
 │   ├── misprompt_full.csv            # Mis-prompt export (29,392 rows)
-│   ├── combined_full.csv             # ReaLMistake + Mis-prompt (30,292 rows)
+│   ├── mmlu_pro_full.csv             # MMLU-Pro export (563,787 rows)
+│   ├── combined_full.csv             # ReaLMistake + Mis-prompt + MMLU-Pro (594,079 rows)
 │   ├── realmistake_full_enriched.csv # Full feature set (900 rows × 35 cols)
 │   ├── misprompt_full_enriched.csv   # Mis-prompt enriched (29,392 × 41 cols)
-│   └── combined_full_enriched.csv    # Combined enriched (30,292 × 42 cols)
+│   └── combined_full_enriched.csv    # Combined enriched (30,292 × 42 cols; regenerate after adding MMLU-Pro)
 ├── scripts/
 │   ├── download_realmistake.py       # Download dataset from Hugging Face or zip
 │   ├── download_misprompt.py         # Download Mis-prompt from GitHub
+│   ├── download_mmlu_pro.py          # Download MMLU-Pro eval results from GitHub
 │   ├── build_full_dataset.py         # JSONL → realmistake_full.csv
 │   ├── build_misprompt_dataset.py    # Mis-prompt JSON → misprompt_full.csv
-│   ├── build_combined_dataset.py     # Merge ReaLMistake + Mis-prompt
+│   ├── build_mmlu_pro_dataset.py     # MMLU-Pro eval JSON → mmlu_pro_full.csv
+│   ├── build_combined_dataset.py     # Merge ReaLMistake + Mis-prompt + MMLU-Pro
 │   ├── enrich_realmistake_full.py      # Add model-level features
 │   ├── enrich_misprompt_full.py      # Enrich Mis-prompt CSV
 │   ├── enrich_combined_full.py       # Enrich combined CSV
@@ -217,20 +221,152 @@ Creates `data/misprompt_full.csv` (29,392 rows from train/dev/eval splits):
 | `explanation` | Why the prompt is wrong (error rows only) |
 | `gold_answer` | Ideal proactive error-handling response |
 
-Combine with ReaLMistake for larger training data:
+## 2c. MMLU-Pro dataset (NeurIPS 2024)
+
+Multiple-choice benchmark with 10 options per question. We use the official cached model predictions (not just the question bank) so each row records whether a specific LLM answered correctly.
+
+```bash
+python scripts/download_mmlu_pro.py
+python scripts/build_mmlu_pro_dataset.py
+```
+
+Sources:
+
+- Questions: [TIGER-Lab/MMLU-Pro](https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro)
+- Model predictions: [TIGER-AI-Lab/MMLU-Pro eval_results](https://github.com/TIGER-AI-Lab/MMLU-Pro/tree/main/eval_results)
+
+Creates `data/mmlu_pro_full.csv` (563,787 rows from 47 models × ~12,032 questions):
+
+| Column | Description |
+|--------|-------------|
+| `question` | Question stem + options A–J (newline-separated) |
+| `llm_model` | Model that answered (e.g. `gpt-4o-2024-08-06`, `Llama-2-7b-hf`) |
+| `error` | `no_error` if model answer matches gold, else `error` (includes missing/unparseable answers) |
+| `id` | MMLU-Pro `question_id` |
+| `category` | Subject (e.g. `math`, `physics`, `law`) |
+| `gold_answer` | Correct option letter (A–J) |
+| `model_answer` | Model's chosen letter, or empty if no answer |
+
+### Example — correct row (`no_error`)
+
+```
+question:
+What will be the number of lamps, each having 300 lumens, required to obtain an average
+illuminance of 50 lux on a 4m * 3m rectangular room?
+
+A. 6
+B. 1
+C. 2
+...
+
+llm_model:    DeepSeek-Coder-V2
+error:         no_error
+id:            11285
+category:      engineering
+gold_answer:   C
+model_answer:  C
+```
+
+### Example — wrong row (`error`)
+
+```
+question:
+In force-current analogy, electrical analogous quantity for displacement (x) is
+
+A. inductance.
+B. resistance.
+...
+I. flux.
+J. current.
+
+llm_model:    DeepSeek-Coder-V2
+error:         error
+id:            11289
+category:      engineering
+gold_answer:   I
+model_answer:  G
+```
+
+Each question appears once per model. The same `id` can therefore appear up to 47 times with different `llm_model` / `error` values.
+
+### MMLU-Pro models (47)
+
+Exact `llm_model` values as stored in `data/mmlu_pro_full.csv`:
+
+1. `DeepSeek-Coder-V2`
+2. `Llama-2-13b-hf`
+3. `Llama-2-70b-hf`
+4. `Llama-2-7b-hf`
+5. `Meta-Llama-3-70B`
+6. `Meta-Llama-3-70B-Instruct`
+7. `Meta-Llama-3-8B`
+8. `Meta-Llama-3-8B-Instruct`
+9. `Meta-Llama-3_1-70B`
+10. `Meta-Llama-3_1-70B-Instruct`
+11. `Meta-Llama-3_1-8B`
+12. `Meta-Llama-3_1-8B-Instruct`
+13. `Mistral-7B-Instruct-v0.1`
+14. `Mistral-7B-Instruct-v0.2`
+15. `Mistral-7B-v0.1`
+16. `Mistral-7B-v0.2-hf`
+17. `Mixtral-8x7B-Instruct-v0.1`
+18. `Mixtral-8x7B-v0.1`
+19. `Phi-3-mini-4k-instruct`
+20. `Qwen1.5-110B`
+21. `Qwen1.5-14B-Chat`
+22. `Qwen1.5-72B-Chat`
+23. `Qwen1.5-7B-Chat`
+24. `Yi-34B`
+25. `Yi-6B`
+26. `Yi-6b-Chat`
+27. `arx_0314`
+28. `arx_3`
+29. `c4ai-command-r-v01`
+30. `claude-3-5-haiku-20241022`
+31. `claude-3-5-sonnet-20241022`
+32. `claude-3.5-sonnet`
+33. `deepseek`
+34. `deepseek-chat-v2_5`
+35. `flash_0shots_00_35_03`
+36. `gemini-1.5-flash-002`
+37. `gemini-1.5-pro-002`
+38. `gemma-7b`
+39. `gpt-4o-2024-08-06`
+40. `gpt-4o-mini`
+41. `gpt4o(2024-05-13)`
+42. `iask_pro`
+43. `jamba-1.5-large`
+44. `mathstral-7B`
+45. `opus_2shots_00_37_14`
+46. `sonnet-3.5_0shots_09_34_29`
+47. `sonnet_0shots_12_01_18`
+
+### MMLU-Pro summary
+
+| | Count |
+|--|-------|
+| Total rows | 563,787 |
+| Models | 47 |
+| `no_error` (correct) | 280,943 (49.8%) |
+| `error` (wrong / no answer) | 282,844 (50.2%) |
+
+Combine with ReaLMistake and Mis-prompt:
 
 ```bash
 python scripts/build_combined_dataset.py
 python scripts/enrich_combined_full.py
 ```
 
-Output: `data/combined_full.csv` (30,292 rows) and `data/combined_full_enriched.csv`.
+Output: `data/combined_full.csv` (594,079 rows). Regenerate `combined_full_enriched.csv` after merging — the existing enriched file predates MMLU-Pro.
 
 | Source | Rows | error | no_error |
 |--------|------|-------|----------|
 | ReaLMistake | 900 | 649 | 251 |
 | Mis-prompt | 29,392 | 14,696 | 14,696 |
-| Combined | 30,292 | 15,345 | 14,947 |
+| MMLU-Pro | 563,787 | 282,844 | 280,943 |
+| Combined | 594,079 | 298,189 | 295,890 |
+
+In `combined_full.csv`, MMLU-Pro rows have `source = "mmlu_pro"`, `primary_category` set to the subject, and `model_answer` dropped.
 
 ## 3. Feature enrichment
 
@@ -466,6 +602,8 @@ python scripts/download_realmistake.py
 python scripts/build_full_dataset.py
 python scripts/download_misprompt.py
 python scripts/build_misprompt_dataset.py
+python scripts/download_mmlu_pro.py
+python scripts/build_mmlu_pro_dataset.py
 python scripts/build_combined_dataset.py
 python scripts/enrich_realmistake_full.py
 python scripts/enrich_misprompt_full.py
@@ -482,6 +620,9 @@ python scripts/train_random_forest_woe.py
 
 - Kamoi et al., [Evaluating LLMs at Detecting Errors in LLM Responses](https://arxiv.org/abs/2404.03602) (COLM 2024)
 - Zeng et al., [Mis-prompt: Benchmarking Large Language Models for Proactive Error Handling](https://arxiv.org/abs/2506.00064) (ACL 2025)
+- Wang et al., [MMLU-Pro: A More Robust and Challenging Multi-Task Language Understanding Benchmark](https://arxiv.org/abs/2406.01574) (NeurIPS 2024)
 - Dataset: [ryokamoi/realmistake](https://huggingface.co/datasets/ryokamoi/realmistake)
 - Dataset: [Jiayi-Zeng/mis-prompt](https://github.com/Jiayi-Zeng/mis-prompt)
+- Dataset: [TIGER-Lab/MMLU-Pro](https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro)
 - Code: [psunlpgroup/ReaLMistake](https://github.com/psunlpgroup/ReaLMistake)
+- Code: [TIGER-AI-Lab/MMLU-Pro](https://github.com/TIGER-AI-Lab/MMLU-Pro)
