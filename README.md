@@ -13,6 +13,7 @@ Analysis and modeling pipeline for LLM error detection across multiple benchmark
 │   ├── realmistake_full.csv          # Base tabular export (900 rows)
 │   ├── misprompt_full.csv            # Mis-prompt export (29,392 rows)
 │   ├── mmlu_pro_full.csv             # MMLU-Pro export (563,787 rows)
+│   ├── mmlu_pro_full_enriched.csv    # MMLU-Pro enriched (563,787 × 35 cols)
 │   ├── combined_full.csv             # ReaLMistake + Mis-prompt + MMLU-Pro (594,079 rows)
 │   ├── realmistake_full_enriched.csv # Full feature set (900 rows × 35 cols)
 │   ├── misprompt_full_enriched.csv   # Mis-prompt enriched (29,392 × 41 cols)
@@ -24,6 +25,8 @@ Analysis and modeling pipeline for LLM error detection across multiple benchmark
 │   ├── build_full_dataset.py         # JSONL → realmistake_full.csv
 │   ├── build_misprompt_dataset.py    # Mis-prompt JSON → misprompt_full.csv
 │   ├── build_mmlu_pro_dataset.py     # MMLU-Pro eval JSON → mmlu_pro_full.csv
+│   ├── enrich_mmlu_pro_full.py       # Enrich MMLU-Pro CSV (model + question features)
+│   ├── model_features.py             # Per-model architecture/hyperparam lookup (47 MMLU models)
 │   ├── build_combined_dataset.py     # Merge ReaLMistake + Mis-prompt + MMLU-Pro
 │   ├── enrich_realmistake_full.py      # Add model-level features
 │   ├── enrich_misprompt_full.py      # Enrich Mis-prompt CSV
@@ -350,7 +353,49 @@ Exact `llm_model` values as stored in `data/mmlu_pro_full.csv`:
 | `no_error` (correct) | 280,943 (49.8%) |
 | `error` (wrong / no answer) | 282,844 (50.2%) |
 
-Combine with ReaLMistake and Mis-prompt:
+### Enrich MMLU-Pro for training
+
+Build a **standalone** enriched dataset (not merged with ReaLMistake/Mis-prompt):
+
+```bash
+python scripts/enrich_mmlu_pro_full.py
+```
+
+Output: `data/mmlu_pro_full_enriched.csv` — **563,787 rows × 35 columns**.
+
+**Base columns (target + identifiers):**
+
+| Column | Description |
+|--------|-------------|
+| `question` | Multiple-choice question + options A–J |
+| `llm_model` | One of 47 models (see list above) |
+| `error` | `no_error` (correct) or `error` (wrong / no answer) |
+
+**Model-level features (23 columns)** — joined by `llm_model`, unique per model from `scripts/model_features.py`:
+
+| Column | Examples across models |
+|--------|------------------------|
+| `context_window_tokens` | 4096 (Llama-2-7b) · 8192 (Llama-3-8B) · 131072 (DeepSeek-Coder-V2) · 128000 (GPT-4o) |
+| `attention_type` | MHA · GQA · MoE · hybrid_Mamba |
+| `tokenizer_type` | sentencepiece_BPE · cl100k_BPE · bytelevel_BPE |
+| `is_open_source` | True (Llama, Qwen, Mistral) · False (GPT-4o, Claude, Gemini) |
+| `temperature`, `top_p`, `top_k` | Model-specific API defaults |
+| `galileo_qa_no_rag`, `crag_hallucination_rate` | External benchmark proxies (tiered by model capability) |
+
+**Question-level features (9 columns)** — computed per row from `question`:
+
+| Column | Method |
+|--------|--------|
+| `question_length_words` | Word count |
+| `question_length_chars` | Character count |
+| `question_complexity_score` | Flesch-Kincaid grade (`textstat`) |
+| `question_category` | MMLU subject (math, physics, law, …) |
+| `context_token_count` | `tiktoken` for API models, word × 1.25 estimate for open-weight models |
+| `contains_negation`, `has_few_shot_examples`, … | Regex flags |
+
+Each of the 47 models has its own feature row (context window, attention type, tokenizer, hyperparams, benchmark scores). Use `question`, `llm_model`, and the 32 feature columns to predict `error`.
+
+Combine with ReaLMistake and Mis-prompt (optional):
 
 ```bash
 python scripts/build_combined_dataset.py
@@ -604,6 +649,7 @@ python scripts/download_misprompt.py
 python scripts/build_misprompt_dataset.py
 python scripts/download_mmlu_pro.py
 python scripts/build_mmlu_pro_dataset.py
+python scripts/enrich_mmlu_pro_full.py
 python scripts/build_combined_dataset.py
 python scripts/enrich_realmistake_full.py
 python scripts/enrich_misprompt_full.py
