@@ -1,6 +1,6 @@
 # MMLU-Pro — Data & Models
 
-Standalone documentation for the MMLU-Pro branch of the Retrieval Failure project: raw data sources, enriched training data, feature selection, and trained classifiers (XGBoost and Random Forest).
+Standalone documentation for the MMLU-Pro branch of the Retrieval Failure project: raw data sources, enriched training data, feature selection, and trained classifiers (XGBoost, Random Forest, and MLP).
 
 Paper: [MMLU-Pro: A More Robust and Challenging Multi-Task Language Understanding Benchmark](https://arxiv.org/abs/2406.01574) (NeurIPS 2024)
 
@@ -142,26 +142,26 @@ Computed per row from `question` text (via `scripts/enrich_question_features.py)
 
 ## 4. Modeling overview
 
-Both models solve the same task: **binary classification** — predict whether a given model will get a given question wrong (`error` = 1) vs correct (`no_error` = 0).
+All three models solve the same task: **binary classification** — predict whether a given model will get a given question wrong (`error` = 1) vs correct (`no_error` = 0).
 
 They share an identical preprocessing pipeline (stratified split → WOE → IV → RFE → train → evaluate). The only differences are the **RFE base estimator** (matches the final model family) and the **final classifier hyperparameters**.
 
-| | XGBoost | Random Forest |
-|--|---------|---------------|
-| Variant | WOE + IV + RFE + complex XGBoost | WOE + IV + RFE + complex Random Forest |
-| Training script | `scripts/train_xgboost_mmlu_pro_woe_iv_rfe_complex.py` | `scripts/train_random_forest_mmlu_pro_woe_iv_rfe_complex.py` |
-| Notebook | `notebooks/train_xgboost_mmlu_pro_woe_iv_rfe_complex.ipynb` | `notebooks/train_random_forest_mmlu_pro_woe_iv_rfe_complex.ipynb` |
-| Saved model | `models/xgboost_mmlu_pro_woe_iv_rfe_complex.json` | `models/random_forest_mmlu_pro_woe_iv_rfe_complex.joblib` |
-| Preprocessing | `models/xgboost_mmlu_pro_woe_iv_rfe_complex_preprocessing.json` | `models/random_forest_mmlu_pro_woe_iv_rfe_complex_preprocessing.json` |
-| Metrics | `models/xgboost_mmlu_pro_woe_iv_rfe_complex_metrics.json` | `models/random_forest_mmlu_pro_woe_iv_rfe_complex_metrics.json` |
-| Test accuracy | **0.730** | 0.685 |
-| Test ROC-AUC | **0.808** | 0.746 |
+| | XGBoost | Random Forest | MLP |
+|--|---------|---------------|-----|
+| Variant | WOE + IV + RFE + complex XGBoost | WOE + IV + RFE + complex Random Forest | WOE + IV + RFE + complex MLP |
+| Training script | `scripts/train_xgboost_mmlu_pro_woe_iv_rfe_complex.py` | `scripts/train_random_forest_mmlu_pro_woe_iv_rfe_complex.py` | `scripts/train_mlp_mmlu_pro_woe_iv_rfe_complex.py` |
+| Notebook | `notebooks/train_xgboost_mmlu_pro_woe_iv_rfe_complex.ipynb` | `notebooks/train_random_forest_mmlu_pro_woe_iv_rfe_complex.ipynb` | `notebooks/train_mlp_mmlu_pro_woe_iv_rfe_complex.ipynb` |
+| Saved model | `models/xgboost_mmlu_pro_woe_iv_rfe_complex.json` | `models/random_forest_mmlu_pro_woe_iv_rfe_complex.joblib` | `models/mlp_mmlu_pro_woe_iv_rfe_complex.joblib` |
+| Preprocessing | `models/xgboost_mmlu_pro_woe_iv_rfe_complex_preprocessing.json` | `models/random_forest_mmlu_pro_woe_iv_rfe_complex_preprocessing.json` | `models/mlp_mmlu_pro_woe_iv_rfe_complex_preprocessing.json` |
+| Metrics | `models/xgboost_mmlu_pro_woe_iv_rfe_complex_metrics.json` | `models/random_forest_mmlu_pro_woe_iv_rfe_complex_metrics.json` | `models/mlp_mmlu_pro_woe_iv_rfe_complex_metrics.json` |
+| Test accuracy | **0.730** | 0.685 | 0.685 |
+| Test ROC-AUC | **0.808** | 0.746 | 0.748 |
 
 ---
 
 ## 5. Shared training pipeline (Steps 1–3)
 
-These steps are identical for both models.
+These steps are identical for all three models.
 
 ### Step 1 — Load data & stratified split
 
@@ -515,44 +515,212 @@ These 15 features are in the saved model and preprocessing artifact:
 
 **Breakdown:** 3 question-derived · 4 model identity/architecture · 2 hyperparams · 6 benchmark proxies (Galileo + CRAG)
 
-Only **3 features overlap** in rank-1 selection between the two models: `model_name_woe`, `question_category_woe`, and `crag_hallucination_rate` (plus shared hyperparams `temperature` and `top_p`).
+Only **3 features overlap** in rank-1 selection between the two tree models: `model_name_woe`, `question_category_woe`, and `crag_hallucination_rate` (plus shared hyperparams `temperature` and `top_p`).
 
 ---
 
-## 8. XGBoost vs Random Forest — head-to-head
+## 8. MLP (Neural Network) model
 
-Both models trained on the same 563,787-row dataset, same 70/15/15 stratified split (random_state=42), same WOE maps, same IV threshold (0), and same RFE target count (15). Differences are the RFE estimator family and final classifier.
+The MLP experiment mirrors the same pipeline through Steps 1–3, then uses a **small MLP for RFE** and a **StandardScaler + MLPClassifier pipeline** for the final model. Features are scaled before training because neural nets are sensitive to input magnitude; tree models do not need this step.
 
-| Metric | XGBoost (test) | Random Forest (test) | Δ (XGB − RF) |
-|--------|----------------|----------------------|--------------|
-| Accuracy | **0.730** | 0.685 | +4.5 pp |
-| Precision | **0.728** | 0.686 | +4.2 pp |
-| Recall | **0.737** | 0.684 | +5.3 pp |
-| F1 | **0.733** | 0.685 | +4.8 pp |
-| ROC-AUC | **0.808** | 0.746 | +6.1 pp |
-| False positives (test) | 11,666 | 13,264 | −1,598 |
-| False negatives (test) | 11,153 | 13,396 | −2,243 |
+### Step 4 — RFE (MLP estimator)
+
+| Setting | Value |
+|---------|-------|
+| Estimator | MLP (1 hidden layer × 32 units, max_iter=40, Adam) |
+| Importance | Mean absolute first-layer weights per input feature |
+| Features to select | **15** |
+| Input pool | 32 IV-passing features |
+
+#### RFE ranking
+
+| Rank | Feature | Selected |
+|------|---------|----------|
+| 1 | `model_name_woe` | Yes |
+| 1 | `context_token_count` | Yes |
+| 1 | `question_length_chars` | Yes |
+| 1 | `question_complexity_score` | Yes |
+| 1 | `question_length_words` | Yes |
+| 1 | `vocab_size` | Yes |
+| 1 | `attention_type_woe` | Yes |
+| 1 | `is_open_source` | Yes |
+| 1 | `question_category_woe` | Yes |
+| 1 | `crag_accuracy` | Yes |
+| 1 | `crag_hallucination_rate` | Yes |
+| 1 | `positional_encoding_type_woe` | Yes |
+| 1 | `galileo_qa_no_rag` | Yes |
+| 1 | `galileo_longform` | Yes |
+| 1 | `top_p` | Yes |
+| 2 | `multilingual_support` | No |
+| 3 | `temperature` | No |
+| 4 | `galileo_qa_with_rag` | No |
+| 5 | `repetition_penalty` | No |
+| 6 | `max_tokens_requested` | No |
+| 7 | `max_output_tokens` | No |
+| 8 | `knowledge_cutoff_year` | No |
+| 9 | `top_k` | No |
+| 10 | `stop_sequences_count` | No |
+| 11 | `context_window_tokens` | No |
+| 12 | `contains_negation` | No |
+| 13 | `tokenizer_type_woe` | No |
+| 14+ | remaining features | No |
+
+**Result:** **15 features** selected — very close to Random Forest RFE, with two swaps:
+
+- **Kept** `question_length_chars` and `attention_type_woe` (question/architecture signals RF RFE dropped)
+- **Dropped** `temperature` and `galileo_qa_with_rag` (RF RFE kept both)
+
+Overall the MLP RFE set still leans on model identity and benchmark proxies, but retains slightly more question-level and architecture detail than RF RFE.
+
+---
+
+### Step 5 — Complex MLP training
+
+Trained on the 15 RFE-selected features inside a `StandardScaler → MLPClassifier` pipeline. Early stopping uses 10% of the training data as an internal validation holdout.
+
+| Hyperparameter | Value |
+|----------------|-------|
+| Hidden layers | (64, 32) |
+| Activation | ReLU |
+| Solver | Adam |
+| `alpha` (L2) | 0.0001 |
+| `batch_size` | 4096 |
+| `learning_rate_init` | 0.001 |
+| `learning_rate` | adaptive |
+| `max_iter` | 200 |
+| `early_stopping` | true |
+| `validation_fraction` | 0.1 |
+| `n_iter_no_change` | 15 |
+| **Training iterations** | **50** (early stopped) |
+| **Final loss** | **0.589** |
+
+**Design rationale:** A shallow 2-layer MLP (64 → 32 → 1) is enough capacity for 15 tabular features without overfitting. `StandardScaler` is required because WOE and raw numeric features live on different scales. RFE uses a smaller single-hidden-layer MLP (32 units, 40 iterations) as a lightweight proxy for the final network family.
+
+**Saved format:** `joblib` (`.joblib`) — scikit-learn pipeline with scaler + MLP.
+
+---
+
+### Step 6 — MLP evaluation results
+
+#### Summary metrics
+
+| Split | Rows | Accuracy | Precision | Recall | F1 | ROC-AUC |
+|-------|------|----------|-----------|--------|-----|---------|
+| **Train** | 394,650 | 0.6890 | 0.6883 | 0.6946 | 0.6914 | 0.7526 |
+| **Val** | 84,568 | 0.6875 | 0.6869 | 0.6931 | 0.6900 | 0.7518 |
+| **Test** | 84,569 | **0.6850** | **0.6846** | **0.6899** | **0.6872** | **0.7479** |
+
+Train–test gap is ~0.4 pp accuracy, similar to Random Forest — the network generalizes without heavy overfitting but does not reach XGBoost performance.
+
+#### Test confusion matrix
+
+```
+                 Predicted
+                 no_error   error
+Actual no_error    28,657   13,485
+Actual error       13,157   29,270
+```
+
+| Class | Precision | Recall | F1 | Support |
+|-------|-----------|--------|-----|---------|
+| no_error (0) | 0.69 | 0.68 | 0.68 | 42,142 |
+| error (1) | 0.68 | 0.69 | 0.69 | 42,427 |
+
+#### Inference on test set
+
+| Metric | Value |
+|--------|-------|
+| Rows scored | 84,569 |
+| Positive predictions (`error`) | 42,755 |
+| Mean predicted probability | 0.501 |
+
+Aggregate calibration is good (mean probability ≈ 0.50).
+
+---
+
+### MLP final feature set
+
+These 15 features are in the saved model and preprocessing artifact:
+
+1. `model_name_woe`
+2. `context_token_count`
+3. `question_length_chars`
+4. `question_complexity_score`
+5. `question_length_words`
+6. `vocab_size`
+7. `attention_type_woe`
+8. `is_open_source`
+9. `question_category_woe`
+10. `crag_accuracy`
+11. `crag_hallucination_rate`
+12. `positional_encoding_type_woe`
+13. `galileo_qa_no_rag`
+14. `galileo_longform`
+15. `top_p`
+
+**Breakdown:** 4 question-derived · 5 model identity/architecture · 1 hyperparam · 5 benchmark proxies (Galileo + CRAG)
+
+**13 / 15 features overlap** with Random Forest RFE; MLP swaps in `question_length_chars` and `attention_type_woe` for RF's `temperature` and `galileo_qa_with_rag`.
+
+#### Top input importances (MLP first-layer weights)
+
+| Feature | Importance |
+|---------|------------|
+| `question_category_woe` | 0.230 |
+| `context_token_count` | 0.189 |
+| `question_length_chars` | 0.175 |
+| `question_complexity_score` | 0.169 |
+| `question_length_words` | 0.163 |
+| `model_name_woe` | 0.162 |
+| `is_open_source` | 0.145 |
+| `galileo_longform` | 0.137 |
+| `positional_encoding_type_woe` | 0.136 |
+| `crag_accuracy` | 0.134 |
+
+Unlike XGBoost (where `model_name_woe` dominates at 0.38), the MLP spreads weight more evenly — `question_category_woe` is the strongest input, reflecting the network's reliance on subject difficulty alongside model metadata.
+
+---
+
+## 9. XGBoost vs Random Forest vs MLP — head-to-head
+
+All three models trained on the same 563,787-row dataset, same 70/15/15 stratified split (random_state=42), same WOE maps, same IV threshold (0), and same RFE target count (15). Differences are the RFE estimator family and final classifier.
+
+| Metric | XGBoost (test) | Random Forest (test) | MLP (test) |
+|--------|----------------|----------------------|------------|
+| Accuracy | **0.730** | 0.685 | 0.685 |
+| Precision | **0.728** | 0.686 | 0.685 |
+| Recall | **0.737** | 0.684 | 0.690 |
+| F1 | **0.733** | 0.685 | 0.687 |
+| ROC-AUC | **0.808** | 0.746 | 0.748 |
+| False positives (test) | 11,666 | 13,264 | 13,485 |
+| False negatives (test) | 11,153 | 13,396 | 13,157 |
 
 **Why XGBoost wins on MMLU-Pro:**
 
-1. **Feature interactions:** Gradient boosting sequentially corrects residuals and captures non-linear interactions between model identity and question-level features (e.g. `contains_negation` × `model_name_woe`). RF averages independent trees and misses some of these joint effects.
-2. **RFE feature set:** XGBoost RFE retained more question-level signal (`contains_negation`, length chars, token counts) that helps distinguish hard questions within the same model tier. RF RFE converged on benchmark proxies alone.
-3. **Scale:** 1000 boosted trees with early stopping vs 300 parallel bagged trees — boosting had more capacity to fit the ~395k training rows without severe overfitting (train-test gap only ~1.2 pp for XGBoost vs ~0.4 pp for RF, but RF's ceiling is lower).
+1. **Feature interactions:** Gradient boosting sequentially corrects residuals and captures non-linear interactions between model identity and question-level features (e.g. `contains_negation` × `model_name_woe`). RF and MLP miss some of these joint effects.
+2. **RFE feature set:** XGBoost RFE retained more question-level signal (`contains_negation`, length chars, token counts) that helps distinguish hard questions within the same model tier. RF and MLP RFE converged on benchmark proxies.
+3. **Scale:** 1000 boosted trees with early stopping vs 300 bagged trees or a 64→32 MLP — boosting had more capacity to fit the ~395k training rows without severe overfitting (train-test gap ~1.2 pp for XGBoost vs ~0.4 pp for RF/MLP, but the tree/neural baselines hit a lower ceiling).
 
-**When Random Forest might still be useful:**
+**Random Forest vs MLP:**
 
-- Faster training and inference (embarrassingly parallel, no sequential boosting)
-- More interpretable per-tree splits for stakeholder review
-- Lower implementation complexity (pure scikit-learn, no XGBoost dependency)
-- Baseline for comparing whether gradient boosting adds value over bagging on this task — it clearly does (+4.5 pp accuracy)
+- Test accuracy is effectively tied (~0.685); MLP has marginally higher ROC-AUC (+0.2 pp) and recall (+0.6 pp).
+- MLP RFE keeps `question_length_chars` and `attention_type_woe`; RF RFE keeps `temperature` and `galileo_qa_with_rag`.
+- MLP requires feature scaling and longer per-epoch training; RF trains faster on CPU with `n_jobs=-1`.
+
+**When RF or MLP might still be useful:**
+
+- Faster or simpler baselines (RF: parallel trees; MLP: pure scikit-learn, no XGBoost)
+- RF: per-tree split interpretability for stakeholder review
+- MLP: tests whether a neural net on tabular WOE features adds value over bagging — on this task it does not beat RF meaningfully and both trail XGBoost by ~4.5 pp accuracy
 
 ---
 
-## 9. Comparison with other project models
+## 10. Comparison with other project models
 
 | Model | Dataset | Test rows | Test accuracy | Test ROC-AUC |
 |-------|---------|-----------|---------------|--------------|
 | **MMLU-Pro complex XGBoost** | `mmlu_pro_full_enriched.csv` | 84,569 | **0.730** | **0.808** |
+| MMLU-Pro complex MLP | `mmlu_pro_full_enriched.csv` | 84,569 | 0.685 | 0.748 |
 | MMLU-Pro complex Random Forest | `mmlu_pro_full_enriched.csv` | 84,569 | 0.685 | 0.746 |
 | Combined complex XGBoost | `combined_full_enriched.csv` | 4,544 | 0.755 | 0.832 |
 
@@ -560,13 +728,14 @@ MMLU-Pro test set is ~19× larger. Accuracy is slightly lower because MMLU error
 
 ---
 
-## 10. Notebooks
+## 11. Notebooks
 
 | Notebook | Purpose |
 |----------|---------|
 | `notebooks/view_mmlu_pro_enriched.ipynb` | Explore enriched data: null counts, per-model samples, feature distributions |
 | `notebooks/train_xgboost_mmlu_pro_woe_iv_rfe_complex.ipynb` | Full XGBoost pipeline: split → WOE → IV → RFE → XGBoost → metrics → save artifacts |
 | `notebooks/train_random_forest_mmlu_pro_woe_iv_rfe_complex.ipynb` | Full Random Forest pipeline: split → WOE → IV → RFE → Random Forest → metrics → save artifacts |
+| `notebooks/train_mlp_mmlu_pro_woe_iv_rfe_complex.ipynb` | Full MLP pipeline: split → WOE → IV → RFE → StandardScaler → MLP → metrics → save artifacts |
 
 ```bash
 jupyter notebook notebooks/
@@ -574,7 +743,7 @@ jupyter notebook notebooks/
 
 ---
 
-## 11. End-to-end reproduction
+## 12. End-to-end reproduction
 
 ### Data pipeline (shared)
 
@@ -602,19 +771,28 @@ python scripts/train_random_forest_mmlu_pro_woe_iv_rfe_complex.py
 
 Or interactively: `notebooks/train_random_forest_mmlu_pro_woe_iv_rfe_complex.ipynb`
 
-**Expected runtime (Random Forest):** ~3 minutes on 394k training rows with `n_jobs=-1` (M-series Mac / multi-core CPU). XGBoost takes longer due to 1000 sequential boosting rounds.
+### Train MLP
+
+```bash
+python scripts/train_mlp_mmlu_pro_woe_iv_rfe_complex.py
+```
+
+Or interactively: `notebooks/train_mlp_mmlu_pro_woe_iv_rfe_complex.ipynb`
+
+**Expected runtime:** Random Forest ~3 minutes on 394k training rows with `n_jobs=-1` (M-series Mac / multi-core CPU). MLP ~5–10 minutes (50 early-stopped epochs, batch_size=4096). XGBoost takes longer due to 1000 sequential boosting rounds.
 
 ---
 
-## 12. Key takeaways
+## 13. Key takeaways
 
 1. **563,787 model–question rows** from 47 LLMs on MMLU-Pro, labeled error vs no_error.
 2. **32 engineered features** (model specs + question metrics) → WOE on 5 categoricals.
 3. **IV + RFE** reduced to **15 features** per model; model identity and benchmark proxies are strongest univariate signals.
-4. **XGBoost (best):** 73.0% test accuracy, 0.808 ROC-AUC — captures question-level interactions that RF misses.
-5. **Random Forest (baseline):** 68.5% test accuracy, 0.746 ROC-AUC — solid bagging baseline, ~4.5 pp behind boosting on the same pipeline.
-6. Both models predict **whether a specific LLM will fail on a specific question** using model metadata and lightweight question features — not the question text itself.
-7. RFE feature sets **differ by estimator family**; for strict apples-to-apples model comparison, fix the same 15 features and retrain both classifiers.
+4. **XGBoost (best):** 73.0% test accuracy, 0.808 ROC-AUC — captures question-level interactions that RF and MLP miss.
+5. **Random Forest (baseline):** 68.5% test accuracy, 0.746 ROC-AUC — solid bagging baseline, ~4.5 pp behind boosting.
+6. **MLP (neural baseline):** 68.5% test accuracy, 0.748 ROC-AUC — matches RF; spreads importance across question features rather than concentrating on `model_name_woe`.
+7. All models predict **whether a specific LLM will fail on a specific question** using model metadata and lightweight question features — not the question text itself.
+8. RFE feature sets **differ by estimator family**; for strict apples-to-apples model comparison, fix the same 15 features and retrain all classifiers.
 
 ---
 

@@ -1,0 +1,102 @@
+{
+  "dataset": "mmlu_pro_full_enriched.csv",
+  "model_variant": "complex",
+  "feature_selection": {
+    "total_features": 32,
+    "iv_selected": 32,
+    "rfe_selected": 15,
+    "selected_features": [
+      "model_name_woe",
+      "context_token_count",
+      "question_length_chars",
+      "question_complexity_score",
+      "question_length_words",
+      "vocab_size",
+      "attention_type_woe",
+      "is_open_source",
+      "question_category_woe",
+      "crag_accuracy",
+      "crag_hallucination_rate",
+      "positional_encoding_type_woe",
+      "galileo_qa_no_rag",
+      "galileo_longform",
+      "top_p"
+    ]
+  },
+  "model_params": {
+    "hidden_layer_sizes": [
+      64,
+      32
+    ],
+    "activation": "relu",
+    "solver": "adam",
+    "alpha": 0.0001,
+    "batch_size": 4096,
+    "learning_rate_init": 0.001,
+    "max_iter": 200,
+    "early_stopping": true,
+    "validation_fraction": 0.1,
+    "n_iter_no_change": 15,
+    "n_iter_": 50,
+    "loss_": 0.589297113279836
+  },
+  "train": {
+    "split": "train",
+    "accuracy": 0.6889573039402002,
+    "precision": 0.6882685310765566,
+    "recall": 0.6946057881711197,
+    "f1": 0.6914226388438498,
+    "roc_auc": 0.752647418939576,
+    "confusion_matrix": [
+      [
+        134372,
+        62288
+      ],
+      [
+        60465,
+        137525
+      ]
+    ]
+  },
+  "val": {
+    "split": "val",
+    "accuracy": 0.6875413868129789,
+    "precision": 0.6869116307318555,
+    "recall": 0.6930963773069037,
+    "f1": 0.689990145009151,
+    "roc_auc": 0.7518383097245452,
+    "confusion_matrix": [
+      [
+        28738,
+        13403
+      ],
+      [
+        13021,
+        29406
+      ]
+    ]
+  },
+  "test": {
+    "split": "test",
+    "accuracy": 0.684967304804361,
+    "precision": 0.684598292597357,
+    "recall": 0.6898908713790747,
+    "f1": 0.6872343922424925,
+    "roc_auc": 0.7479220240729574,
+    "confusion_matrix": [
+      [
+        28657,
+        13485
+      ],
+      [
+        13157,
+        29270
+      ]
+    ]
+  },
+  "inference_sample": {
+    "n_rows": 84569,
+    "positive_predictions": 42755,
+    "mean_predicted_probability": 0.500754969637006
+  }
+}
