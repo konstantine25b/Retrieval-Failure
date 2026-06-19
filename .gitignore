@@ -36,6 +36,7 @@ Thumbs.db
 data/misprompt/*.json
 data/mmlu_pro/
 data/mmlu_pro_full.csv
+data/mmlu_pro_full_enriched.csv
 data/combined_full.csv
 
 .idea/
